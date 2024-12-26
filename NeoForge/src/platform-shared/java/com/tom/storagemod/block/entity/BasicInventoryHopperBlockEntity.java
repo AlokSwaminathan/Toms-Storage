@@ -44,9 +44,11 @@ public class BasicInventoryHopperBlockEntity extends AbstractInventoryHopperBloc
 
 	public void setFilter(ItemStack filter) {
 		this.filter = filter;
-		if (this.filter.isEmpty())filterPred = null;
+		if (this.filter.isEmpty())
+			filterPred = null;
 		else if (this.filter.getItem() instanceof IItemFilter i) {
-			filterPred = i.createFilter(BlockFaceReference.touching(level, worldPosition, getBlockState().getValue(AbstractInventoryHopperBlock.FACING)), filter);
+			filterPred = i.createFilter(BlockFaceReference.touching(level, worldPosition,
+					getBlockState().getValue(AbstractInventoryHopperBlock.FACING)), filter);
 		} else {
 			filterPred = s -> ItemStack.isSameItemSameComponents(s.getStack(), filter);
 		}
@@ -60,21 +62,26 @@ public class BasicInventoryHopperBlockEntity extends AbstractInventoryHopperBloc
 
 	@Override
 	public void updateServer() {
-		if(!filter.isEmpty() && filterPred == null)setFilter(filter);//update predicate
+		if (!filter.isEmpty() && filterPred == null)
+			setFilter(filter);// update predicate
 		BlockState state = level.getBlockState(worldPosition);
 		Direction facing = state.getValue(AbstractInventoryHopperBlock.FACING);
 		IInventoryAccess top = topCache.getAccess(level, worldPosition.relative(facing.getOpposite()));
 		IInventoryAccess bottom = bottomCache.getAccess(level, worldPosition.relative(facing));
 		boolean topNet = topCache.isNetwork();
-		if (!topCache.isValid() || !bottomCache.isValid())return;
-		if (!topNet && !bottomCache.isNetwork())return;
+		if (!topCache.isValid() || !bottomCache.isValid())
+			return;
+		if (!topNet && !bottomCache.isNetwork())
+			return;
 		if (cooldown > 0) {
 			cooldown--;
 			return;
 		}
 		boolean hasFilter = filterPred != null;
-		if (topNet && !hasFilter)return;
-		if (!isEnabled())return;
+		if (topNet && !hasFilter)
+			return;
+		if (!isEnabled())
+			return;
 
 		IInventoryChangeTracker tt = top.tracker();
 		long t = tt.getChangeTracker(level);
@@ -82,24 +89,29 @@ public class BasicInventoryHopperBlockEntity extends AbstractInventoryHopperBloc
 			topChange = t;
 			waiting = 0;
 			topSlot = null;
-		} else cooldown = 4;
-		if (waiting == 1)return;
+		} else
+			cooldown = 4;
+		if (waiting == 1)
+			return;
 
 		IInventoryChangeTracker bt = bottom.tracker();
 		long b = bt.getChangeTracker(level);
 		if (bottomChange != b) {
 			bottomChange = b;
 			waiting = 0;
-		} else cooldown = 4;
-		if (waiting == 2)return;
+		} else
+			cooldown = 4;
+		if (waiting == 2)
+			return;
 
 		boolean topWasNull = topSlot == null;
-		if(hasFilter)filterPred.updateState();
+		if (hasFilter)
+			filterPred.updateState();
 		if (topSlot == null || waiting == 3)
 			topSlot = tt.findSlotAfter(topSlot, hasFilter ? filterPred : (s -> true), false, true);
 
 		if (topSlot == null) {
-			if(topWasNull) {
+			if (topWasNull) {
 				waiting = 1;
 				cooldown = 10;
 			} else {
@@ -115,7 +127,7 @@ public class BasicInventoryHopperBlockEntity extends AbstractInventoryHopperBloc
 			return;
 		}
 		StoredItemStack st = new StoredItemStack(is);
-		if(hasFilter && !filterPred.test(st)) {
+		if (hasFilter && !filterPred.test(st)) {
 			waiting = 3;
 			cooldown = 1;
 			return;
@@ -128,8 +140,8 @@ public class BasicInventoryHopperBlockEntity extends AbstractInventoryHopperBloc
 			return;
 		}
 
-		if (topSlot.transferTo(1, bottomSlot)) {
-			cooldown = 10;
+		if (topSlot.transferTo(16, bottomSlot)) {
+			cooldown = 4;
 		} else {
 			waiting = 3;
 			cooldown = 10;
